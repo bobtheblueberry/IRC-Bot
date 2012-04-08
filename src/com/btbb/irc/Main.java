@@ -66,12 +66,14 @@ public class Main {
         try {
             PrintWriter w = new PrintWriter(settingsFile);
             w.println("server=irc.freenode.net");
+            w.println("channels can be multiple: #chan1,#chan2,#chan3 etc.");
             w.println("channel=#lobby");
             w.println("nick=AlfredENewman");
             w.println("password=muffins");
             w.println("port=6667");
             w.println("markov=markov.lua");
             w.println("logs=logs/");
+            w.println("owner=JonPHolder");
             w.close();
         } catch (FileNotFoundException e) {
             System.out.println("Error writing settings");

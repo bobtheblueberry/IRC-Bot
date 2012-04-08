@@ -5,13 +5,21 @@ import java.util.regex.Pattern;
 
 public class Request {
 
-    // for security
-    private static String MANDATORY_OWNER = "bobtheblueberry";
     private String line;
     private String C = "\\$";
 
-    public Request(String line) {
-        this.line = line;
+    public Request(String line)
+        {
+            this.line = line;
+        }
+
+    public String getChannel() {
+        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (.+) :(.+)", Pattern.CASE_INSENSITIVE);
+        Matcher match = regex.matcher(this.line);
+        if (!match.find()) {
+            return null;
+        }
+        return match.group(4);
     }
 
     public String getSender() {
@@ -55,7 +63,7 @@ public class Request {
     }
 
     public boolean hasOwnership() {
-        return getSender().equalsIgnoreCase(MANDATORY_OWNER);
+        return getSender().equalsIgnoreCase(IRCBot.bot.MANDATORY_OWNER);
     }
 
     public boolean isCommand() {
@@ -69,15 +77,16 @@ public class Request {
         Matcher match = regex.matcher(this.line);
         return match.matches();
     }
-    
+
     public boolean isNotice() {
         Pattern regex = Pattern.compile("^:(.+) NOTICE (.+)", Pattern.CASE_INSENSITIVE);
         Matcher match = regex.matcher(this.line);
         return match.matches();
     }
-    
+
     public boolean isGhostedMessage() {
-        Pattern regex = Pattern.compile("^:(.+) NOTICE " + IRCBot.nick + " :(.?)" + IRCBot.NICK + "(.?) has been ghosted.", Pattern.CASE_INSENSITIVE);
+        Pattern regex = Pattern.compile("^:(.+) NOTICE " + IRCBot.nick + " :(.?)" + IRCBot.bot.NICK
+                + "(.?) has been ghosted.", Pattern.CASE_INSENSITIVE);
         Matcher match = regex.matcher(this.line);
         return match.matches();
     }
@@ -121,22 +130,16 @@ public class Request {
     }
 
     public boolean isMode() {
-        Pattern pingRegex = Pattern
-                .compile(":" + IRCBot.nick + " MODE " + IRCBot.nick + " :(.+)", Pattern.CASE_INSENSITIVE);
+        Pattern pingRegex = Pattern.compile(":" + IRCBot.nick + " MODE " + IRCBot.nick + " :(.+)",
+                Pattern.CASE_INSENSITIVE);
         Matcher ping = pingRegex.matcher(this.line);
         return ping.matches();
     }
 
     public boolean isError(String error) {
-        Pattern pingRegex = Pattern
-                .compile(":(.+) " + error + "(.+) (.+) :(.+)", Pattern.CASE_INSENSITIVE);
+        Pattern pingRegex = Pattern.compile(":(.+) " + error + "(.+) (.+) :(.+)", Pattern.CASE_INSENSITIVE);
         Matcher ping = pingRegex.matcher(this.line);
         return ping.matches();
-    }
-
-    public String getDestinationChannel() {
-        String[] token = this.line.split(" ");
-        return token[4];
     }
 
     public boolean match(String command) {
@@ -190,9 +193,10 @@ public class Request {
         if (!m.matches()) {
             return null;
         }
-        return new String[] { m.group(n), m.group(n + 1) };
+        return new String[]
+            { m.group(n), m.group(n + 1) };
     }
-    
+
     public String[] matchArgName1(String command) {
         Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (.+) :" + C + command + " ([A-Za-z0-9_.-]+) (.+)",
                 Pattern.CASE_INSENSITIVE);
@@ -200,6 +204,7 @@ public class Request {
         if (!m.matches()) {
             return null;
         }
-        return new String[] { m.group(4), m.group(5) };
+        return new String[]
+            { m.group(4), m.group(5) };
     }
 }

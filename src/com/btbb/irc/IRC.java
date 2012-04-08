@@ -3,8 +3,6 @@ package com.btbb.irc;
 import java.io.BufferedWriter;
 import java.io.IOException;
 
-
-
 /**
  * The skeleton of the IRC Bot.
  * 
@@ -12,7 +10,6 @@ import java.io.IOException;
  */
 public class IRC {
     BufferedWriter bw;
-    String channel;
 
     /**
      * Bot class constructor, set the defaults for the output stream and the
@@ -21,10 +18,10 @@ public class IRC {
      * @param writer
      * @param own
      */
-    IRC(BufferedWriter writer, String chan) {
-        bw = writer;
-        channel = chan;
-    }
+    IRC(BufferedWriter writer)
+        {
+            bw = writer;
+        }
 
     /**
      * This is the main part of the bot, it replies to PING's
@@ -43,15 +40,10 @@ public class IRC {
      * @throws java.io.IOException
      */
     public void say(String message) throws IOException {
-        if (IRCBot.isPM) {
-            this.MSG(message, IRCBot.person);
-            return;
-        }
-        bw.write("PRIVMSG " + channel + " :" + message + "\n");
-        bw.flush();
+        say(message, IRCBot.bot.person);
     }
-    
-    public void MSG(String message, String person) throws IOException {
+
+    public void say(String message, String person) throws IOException {
         bw.write("PRIVMSG " + person + " :" + message + "\n");
         bw.flush();
     }
@@ -59,16 +51,12 @@ public class IRC {
     /**
      * Joins a specified IRC channel and sets this.channel accordingly
      * 
-     * @param channel
+     * @param firstChannel
      * @throws java.io.IOException
      */
     public void join(String chan) throws IOException {
         bw.write("JOIN " + chan + "\n");
         bw.flush();
-
-        // we're doing this so that there's no confusion
-        // as to which channel the bot is in
-        channel = chan;
     }
 
     /**
@@ -76,7 +64,7 @@ public class IRC {
      * 
      * @throws java.io.IOException
      */
-    public void part() throws IOException {
+    public void part(String channel) throws IOException {
         bw.write("PART " + channel + "\n");
         bw.flush();
     }
@@ -87,7 +75,7 @@ public class IRC {
      * @param reason
      * @throws java.io.IOException
      */
-    public void quit() throws IOException {
+    public void quit(String channel) throws IOException {
         bw.write("QUIT " + channel + "\n");
         bw.flush();
     }
@@ -103,21 +91,19 @@ public class IRC {
         bw.write("NICK " + nick + "\n");
         bw.flush();
     }
-    
+
     public void nick(String nick) throws IOException {
         bw.write("NICK " + nick + "\n");
         bw.flush();
     }
-    
-    public void ghost(String nick, String pass)  throws IOException {
-        bw.write(":PRIVMSG NickServ GHOST $nick $pass\n".replaceAll("\\$nick", nick)
-                .replaceAll("\\$pass", pass));
+
+    public void ghost(String nick, String pass) throws IOException {
+        bw.write(":PRIVMSG NickServ GHOST $nick $pass\n".replaceAll("\\$nick", nick).replaceAll("\\$pass", pass));
         bw.flush();
     }
-    
-    public void identify(String nick, String pass)  throws IOException {
-        bw.write(":PRIVMSG NickServ IDENTIFY $nick $pass\n".replaceAll("\\$nick", nick)
-                .replaceAll("\\$pass", pass));
+
+    public void identify(String nick, String pass) throws IOException {
+        bw.write(":PRIVMSG NickServ IDENTIFY $nick $pass\n".replaceAll("\\$nick", nick).replaceAll("\\$pass", pass));
         bw.flush();
     }
 }
