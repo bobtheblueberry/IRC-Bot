@@ -40,18 +40,13 @@ public class IRCBot {
     /**
      * @param args
      */
-    /**
-     * static String server = "irc.esper.net"; static String channel =
-     * "#azayzel"; static String nick = "ralph"; static String password =
-     * "ralphkkk";
-     */
     // ENIGMA-DEV Version
-    static String            server            = "irc.freenode.net";
-    static String            channel           = "#enigma-dev";
-    final static String      NICK              = "dickkkk";
-    static String            password          = "dick555";
+    static String            server;
+    static String            channel;
+    static String            NICK;
+    static String            password;
 
-    static String            nick              = NICK;
+    static String            nick;
 
     // static String mcBot = "BeeblBot";
 
@@ -60,51 +55,43 @@ public class IRCBot {
     static ArrayList<String> insults;
     static ArrayList<String> twain;
 
-    static String            logDir            = "/home/serge/Develop/Bots/irc.freenode.net/logs/";
-    static String            banDir            = "/home/serge/Develop/Bots/irc.freenode.net/bans/";
+    static String            markov;
+    static File              logDir;
 
-    static String            markov            = "//home/serge/Develop/Bots/markov.lua";
-    static String            rLine             = "/home/serge/Develop/Bots/randomline.sh";
-
-    static File              logFolder;
-    static File              banFolder;
-
-    static int               port              = 6667;
+    static int               port       = 6667;
     static IRC               JavaBot;
 
-    static boolean           joined            = false;
-    static boolean           invited           = false;
-    static String            newchannel        = "";
+    static boolean           joined     = false;
+    static boolean           invited    = false;
+    static String            newchannel = "";
 
-    static boolean           isMSG             = false;
-    static boolean           isPM              = false;
-    static String            message           = null;
-    static String            person            = null;
+    static boolean           isMSG      = false;
+    static boolean           isPM       = false;
+    static String            message    = null;
+    static String            person     = null;
 
-    long                     ping              = 0;
+    long                     ping       = 0;
 
-    private Socket           irc               = null;
-    private BufferedWriter   bw                = null;
-    private BufferedReader   br                = null;
+    private Socket           irc        = null;
+    private BufferedWriter   bw         = null;
+    private BufferedReader   br         = null;
 
-    static char              IRC_COLOR_WHITE   = 300;
-    static char              IRC_COLOR_BLACK   = 301;
-    static char              IRC_COLOR_RED     = 304;
-    static char              IRC_COLOR_ORANGE  = 307;
-    static char              IRC_COLOR_YELLOW  = 308;
-    static char              IRC_COLOR_GREEN   = 309;
-    static char              IRC_COLOR_CYAN    = 311;
-    static char              IRC_COLOR_BLUE    = 312;
-    static char              IRC_COLOR_MAGENTA = 313;
-    static char              IRC_COLOR_GREY    = 314;
-
+    /** Minecraft valid name */
     public static boolean validName(String name) {
         return name.length() > 1 && name.length() < 17 && !name.matches("(?i).*[^a-z0-9_].*");
     }
 
-    public IRCBot()
+    public IRCBot(HashMap<String, String> settings)
         {
-
+            logDir = new File(settings.get("logs"));
+            logDir.mkdirs();
+            server = settings.get("server");
+            channel = settings.get("channel");
+            nick = NICK = settings.get("nick");
+            password = settings.get("password");
+            port = Integer.parseInt(settings.get("port"));
+            markov = settings.get("markov");
+            
             System.out.println("Loading Foods");
             loadFile(foods = new ArrayList<String>(), "foods");
             System.out.println("Loading Jokes");
@@ -113,11 +100,6 @@ public class IRCBot {
             loadFile(insults = new ArrayList<String>(), "insults");
             System.out.println("Loading Twain Quotes");
             loadFile(twain = new ArrayList<String>(), "twain");
-
-            logFolder = new File(logDir);
-            logFolder.mkdirs();
-            banFolder = new File(banDir);
-            banFolder.mkdirs();
 
             setupReconnect();
 
@@ -319,11 +301,7 @@ public class IRCBot {
                     }
                 } else if ((arg = request.matchArg("mock")) != null) {
 
-                    /*        if (arg.equalsIgnoreCase(nick)) {
-                                JavaBot.say(request.getSender()
-                                        + ", you have been suspended from using commands for five minutes");
-                                new File(banFolder, sender).createNewFile();
-                            } else*/if (!validName(arg) && !(new File(logFolder, arg).exists())) {
+                    if (!validName(arg) && !(new File(logDir, arg).exists())) {
                         JavaBot.say("Invalid name");
                         continue;
                     } else {
@@ -594,12 +572,12 @@ public class IRCBot {
     }
 
     public static File[] searchForPlayer(String s) {
-        File file = new File(logFolder, s);
+        File file = new File(logDir, s);
         if (file.exists()) {
             return new File[]
                 { file };
         }
-        File[] files = logFolder.listFiles();
+        File[] files = logDir.listFiles();
         ArrayList<File> fl = new ArrayList<File>();
         for (File f : files) {
             if (f.getName().equalsIgnoreCase(s))
@@ -613,51 +591,16 @@ public class IRCBot {
         return new File[0];
     }
 
-    /**
-     * banned from using commands for Five minutes
-     * 
-     * @param s
-     *            person's name
-     * 
-     * @return whether they are or not
-     */
-    public static boolean isBanned(final String s) {
-        File[] files = banFolder.listFiles(new FileFilter() {
-
-            @Override
-            public boolean accept(File pathname) {
-                return s.equalsIgnoreCase(pathname.getName());
-            }
-        });
-        // Five minutes is 30000 Milliseconds
-        long t = 300000;
-        for (File f : files) {
-            long m = f.lastModified();
-            if (System.currentTimeMillis() < (m + t)) {
-                return true;
-            }
-            f.delete();
-        }
-        // guess they aren't banned
-        return false;
-    }
-
     private static String randomLine(String file) {
         try {
-            String l;
-            ProcessBuilder pb = new ProcessBuilder("bash", "-c", rLine + " " + file + "  > .line");
-            Process p;
-
-            p = pb.start();
-            try {
-                p.waitFor();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            BufferedReader in = new BufferedReader(new FileReader(".line"));
-            l = in.readLine();
-            in.close();
-            return l;
+            ArrayList<String> lines = new ArrayList<String>();
+            BufferedReader r = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = r.readLine()) != null)
+                lines.add(line);
+            r.close();
+            int index = (int) (Math.random() * lines.size());
+            return lines.get(index);
         } catch (IOException e1) {
             e1.printStackTrace();
         }
@@ -767,7 +710,6 @@ public class IRCBot {
                 }
             }
             if (f.exists()) {
-                // Great, this will definately suck
                 ArrayList<String> lines = new ArrayList<String>();
                 BufferedReader r = new BufferedReader(new FileReader(f));
                 String line;
@@ -776,21 +718,6 @@ public class IRCBot {
                     if (line.toLowerCase().contains(key))
                         lines.add(line);
                 r.close();
-                /*     ProcessBuilder pb = new ProcessBuilder("bash", "-c", "grep -i " + key + " "
-                             + f.getAbsolutePath() + " > .search");
-                     Process p = pb.start();
-                     try {
-                         p.waitFor();
-                     } catch (InterruptedException e) {
-                         e.printStackTrace();
-                     }
-                      BufferedReader in = new BufferedReader(new FileReader(".search"));
-                     String l;
-                     while ((l = in.readLine()) != null) {
-                         lines.add(l);
-                     }
-                     in.close();
-                     */
                 String s = "";
                 char c = 3;
                 int x = (int) (Math.random() * 3) + 3;
