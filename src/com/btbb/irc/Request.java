@@ -136,6 +136,21 @@ public class Request {
         return ping.matches();
     }
 
+    public int isNumber() {
+        Matcher m;
+        Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (.+) :" + C + "([0-9]+)", Pattern.CASE_INSENSITIVE);
+        m = regex.matcher(this.line);
+        if (!m.matches()) {
+            return -1;
+        }
+        int i = -1;
+        try {
+            i = Integer.parseInt(m.group(4));
+        } catch (Exception e) {
+        }
+        return i;
+    }
+
     public boolean isError(String error) {
         Pattern pingRegex = Pattern.compile(":(.+) " + error + "(.+) (.+) :(.+)", Pattern.CASE_INSENSITIVE);
         Matcher ping = pingRegex.matcher(this.line);

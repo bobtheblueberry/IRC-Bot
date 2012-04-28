@@ -41,12 +41,12 @@ public class IRCBot {
      * @param args
      */
     // ENIGMA-DEV Version
-    static String            server;
-    final String             firstChannel;
-    final String             NICK;
-    static String            password;
+    static String server;
+    final String firstChannel;
+    final String NICK;
+    static String password;
 
-    static String            nick;
+    static String nick;
 
     // static String mcBot = "BeeblBot";
 
@@ -55,38 +55,45 @@ public class IRCBot {
     static ArrayList<String> insults;
     static ArrayList<String> twain;
 
-    static String            markov;
-    static File              logDir;
+    static String markov;
+    static File logDir;
 
-    static int               port    = 6667;
-    static IRC               JavaBot;
+    static int port;
+    static IRC JavaBot;
 
-    static boolean           joined  = false;
-    static boolean           invited = false;
+    static boolean joined = false;
+    static boolean invited = false;
 
-    static boolean           isMSG   = false;
-    static boolean           isPM    = false;
-    static String            message = null;
-    static String            sender  = null;
+    static boolean isMSG = false;
+    static boolean isPM = false;
+    static String message = null;
+    static String sender = null;
 
-    long                     ping    = 0;
+    long ping = 0;
 
-    private Socket           irc     = null;
-    private BufferedWriter   bw      = null;
-    private BufferedReader   br      = null;
+    private Socket irc = null;
+    private BufferedWriter bw = null;
+    private BufferedReader br = null;
 
-    static IRCBot            bot;
+    static IRCBot bot;
 
-    final String             MANDATORY_OWNER;
-    String                   person;         // person.. or channel
-    String                   lastChannel;
-    String                   pmChannel;
-    String[]                 channels;
+    final String MANDATORY_OWNER;
+    String person;         // person.. or channel
+    String lastChannel;
+    String pmChannel;
+    String[] channels;
+
+    ArrayList<String> choices;
+    int choiceType = -1;
+    final int MOCK = 0;
+    final int QUOTE = 1;
+    final int SEARCH = 2;
+    String searchQuery;
 
     /**
      * Set just before joining the new channel
      */
-    String                   newchannel;
+    String newchannel;
 
     /** Minecraft valid name */
     public static boolean validName(String name) {
@@ -111,6 +118,7 @@ public class IRCBot {
             port = Integer.parseInt(settings.get("port"));
             markov = settings.get("markov");
             MANDATORY_OWNER = settings.get("owner");
+            choices = new ArrayList<String>();
 
             System.out.println("Loading Foods");
             loadFile(foods = new ArrayList<String>(), "foods");
@@ -160,7 +168,11 @@ public class IRCBot {
 
             String currLine = null;
             while ((currLine = br.readLine()) != null) {
-                mainloop(currLine);
+                try {
+                    mainloop(currLine);
+                } catch (Exception exc) {
+                    exc.printStackTrace();
+                }
             }
         } catch (UnknownHostException e) {
             System.err.println("No such host");
@@ -280,6 +292,23 @@ public class IRCBot {
 
             return;
         }
+        int reqisNum = request.isNumber();
+        if (reqisNum > 0) {
+            if (reqisNum > choices.size()) {
+                JavaBot.say("no");
+                return;
+            }
+            String s = choices.get(reqisNum - 1);
+            if (choiceType == MOCK) {
+                mock(s);
+            } else if (choiceType == QUOTE) {
+                quote(s);
+            } else if (choiceType == SEARCH) {
+                search(new String[]
+                    { s, searchQuery });
+            }
+            return;
+        }
         if ((arg = request.matchArg("echo")) != null) {
             JavaBot.say(arg);
             return;
@@ -312,61 +341,11 @@ public class IRCBot {
             return;
 
         } else if ((arg = request.matchArg("taste")) != null) {
-            if (Math.random() * 4 > 3) {
-                String food1, food2;
-                food1 = getRandom(foods);
-                food2 = getRandom(foods);
-                while (food1.equals(food2)) {
-                    food1 = getRandom(foods);
-                }
-                JavaBot.say(arg + ", you taste like " + food1 + ", or " + food2);
-                return;
-            } else {
-                JavaBot.say(arg + ", you taste like " + getRandom(foods));
-                return;
-            }
+            taste(arg);
+            return;
         } else if ((arg = request.matchArg("mock")) != null) {
-
-            if (!validName(arg) && !(new File(logDir, arg).exists())) {
-                JavaBot.say("Invalid name");
-                return;
-            } else {
-
-                File[] files = searchForPlayer(arg);
-
-                if (files.length < 1) {
-                    JavaBot.say("I haven't heard of " + arg);
-                    return;
-                } else if (files.length > 1) {
-                    JavaBot.say(getDidYouMean(files));
-                    return;
-                } else {
-                    File f = files[0];
-
-                    ProcessBuilder pb = new ProcessBuilder("bash", "-c", markov + " -d 1 -n 20 < \""
-                            + f.getAbsolutePath() + "\" | tr '\n' ' ' | tr -d '\r' > .out");
-                    Process p = pb.start();
-                    try {
-                        p.waitFor();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    BufferedReader in = new BufferedReader(new FileReader(".out"));
-                    String phrase = in.readLine();
-                    in.close();
-                    char c = 3;
-                    if (phrase == null) {
-                        JavaBot.say("huh?");
-                    } else if (phrase.length() > 2) {
-                        JavaBot.say(c + "2\"" + phrase.substring(0, phrase.length() - 2) + "\"" + c + "6 -- "
-                                + f.getName());
-                        return;
-                    } else {
-                        JavaBot.say("I don't know " + f.getName() + " well enough.");
-                        return;
-                    }
-                }
-            }
+            mock(arg);
+            return;
         } else if (request.match("greet")) {
             JavaBot.say(getGreeting(sender));
             return;
@@ -379,9 +358,7 @@ public class IRCBot {
         } else if (request.match("g")) {
             JavaBot.say("http://tiny.cc/PAIN");
             return;
-        }
-
-        else if ((arg = request.matchArg("google")) != null) {
+        } else if ((arg = request.matchArg("google")) != null) {
             if (arg == null || arg.matches("\\s"))
                 JavaBot.say("http://tiny.cc/PAIN");
             else
@@ -395,39 +372,8 @@ public class IRCBot {
             JavaBot.say(getGreeting(arg));
             return;
         } else if ((arg = request.matchArg("quote")) != null) {
-
-            File f = new File(logDir, arg);
-            if (!f.exists()) {
-                if (!validName(arg)) {
-                    JavaBot.say("You scum!");
-                    return;
-                } else {
-                    File[] files = searchForPlayer(arg);
-                    if (files.length > 1) {
-                        JavaBot.say(getDidYouMean(files));
-                        return;
-                    } else if (files.length > 0) {
-                        f = files[0];
-                    }
-                }
-            }
-            if (f.exists()) {
-                String quote = "";
-                // Try to get a good quote
-                for (int i = 0; i < 10; i++) {
-                    quote = randomLine(f.getAbsolutePath());
-                    // This is the check to see if it's a good one
-                    if (quote != null && quote.contains(" ")) {
-                        break;
-                    }
-                }
-                char c = 3;
-                JavaBot.say(c + "3\"" + quote + "\"" + c + "10 -- " + f.getName());
-                return;
-            } else {
-                JavaBot.say("I haven't heard of " + arg);
-                return;
-            }
+            quote(arg);
+            return;
         } else if ((arg = request.matchArg("define")) != null) {
             JavaBot.say(define(arg));
         } else if ((args = request.matchArgName1("search")) != null) {
@@ -458,7 +404,7 @@ public class IRCBot {
             if ((arg = request.matchArg("join")) != null) {
                 if (!arg.startsWith("#"))
                     arg = "#" + arg;
-                JavaBot.say("I'm going to go over to " + arg + " and see what they're up to over there. Cya.");
+                JavaBot.say("I'm going to go over to " + arg + " and see what they're up to over there.");
                 JavaBot.join(arg);
                 JavaBot.say("Hey guys!", arg);
             }
@@ -519,9 +465,11 @@ public class IRCBot {
         }
     }
 
-    private static String getDidYouMean(File[] files) {
+    private String getDidYouMean(File[] files) {
         String msg = "Do you mean [";
+        choices.clear();
         for (int i = 0; i < files.length; i++) {
+            choices.add(files[i].getName());
             msg = msg + files[i].getName() + ((i < files.length - 1) ? ", " : "");
         }
         return msg + "] ?";
@@ -701,9 +649,10 @@ public class IRCBot {
         }
     }
 
-    private static void search(String[] args) {
+    private void search(String[] args) {
         try {
             String key = args[1];
+            searchQuery = key;
             /*      if (!key.matches("\\w+")) {
                       JavaBot.say("Bad keyword!");
                       return;
@@ -716,6 +665,7 @@ public class IRCBot {
                 } else {
                     File[] files = searchForPlayer(args[0]);
                     if (files.length > 1) {
+                        choiceType = SEARCH;
                         JavaBot.say(getDidYouMean(files));
                         return;
                     } else if (files.length > 0) {
@@ -765,6 +715,101 @@ public class IRCBot {
         } catch (Exception exc) {
             System.err.println("Search function failed");
             exc.printStackTrace();
+        }
+    }
+
+    private void mock(String arg) throws IOException {
+        if (!validName(arg) && !(new File(logDir, arg).exists())) {
+            JavaBot.say("Invalid name");
+            return;
+        } else {
+
+            File[] files = searchForPlayer(arg);
+
+            if (files.length < 1) {
+                JavaBot.say("I haven't heard of " + arg);
+                return;
+            } else if (files.length > 1) {
+                choiceType = MOCK;
+                JavaBot.say(getDidYouMean(files));
+                return;
+            } else {
+                File f = files[0];
+
+                ProcessBuilder pb = new ProcessBuilder("bash", "-c", markov + " -d 1 -n 20 < \"" + f.getAbsolutePath()
+                        + "\" | tr '\n' ' ' | tr -d '\r' > .out");
+                Process p = pb.start();
+                try {
+                    p.waitFor();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                BufferedReader in = new BufferedReader(new FileReader(".out"));
+                String phrase = in.readLine();
+                in.close();
+                char c = 3;
+                if (phrase == null) {
+                    JavaBot.say("huh?");
+                } else if (phrase.length() > 2) {
+                    JavaBot.say(c + "2\"" + phrase.substring(0, phrase.length() - 2) + "\"" + c + "6 -- " + f.getName());
+                    return;
+                } else {
+                    JavaBot.say("I don't know " + f.getName() + " well enough.");
+                    return;
+                }
+            }
+        }
+    }
+
+    private void quote(String arg) throws IOException {
+        File f = new File(logDir, arg);
+        if (!f.exists()) {
+            if (!validName(arg)) {
+                JavaBot.say("You scum!");
+                return;
+            } else {
+                File[] files = searchForPlayer(arg);
+                if (files.length > 1) {
+                    choiceType = QUOTE;
+                    JavaBot.say(getDidYouMean(files));
+                    return;
+                } else if (files.length > 0) {
+                    f = files[0];
+                }
+            }
+        }
+        if (f.exists()) {
+            String quote = "";
+            // Try to get a good quote
+            for (int i = 0; i < 10; i++) {
+                quote = randomLine(f.getAbsolutePath());
+                // This is the check to see if it's a good one
+                if (quote != null && quote.contains(" ")) {
+                    break;
+                }
+            }
+            char c = 3;
+            JavaBot.say(c + "3\"" + quote + "\"" + c + "10 -- " + f.getName());
+            return;
+        } else {
+            JavaBot.say("I haven't heard of " + arg);
+            return;
+        }
+    }
+
+    private void taste(String arg) throws IOException {
+        if (Math.random() * 4 > 3) {
+            String food1, food2;
+            food1 = getRandom(foods);
+            food2 = getRandom(foods);
+            while (food1.equals(food2)) {
+                food1 = getRandom(foods);
+            }
+            JavaBot.say(arg + ", you taste like " + food1 + ", or " + food2);
+            return;
+        } else {
+            JavaBot.say(arg + ", you taste like " + getRandom(foods));
+            return;
         }
     }
 }
