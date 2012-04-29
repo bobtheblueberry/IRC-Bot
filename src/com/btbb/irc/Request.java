@@ -125,7 +125,8 @@ public class Request {
         Pattern pingRegex = Pattern.compile("^:(.+)!(.+)@(.+) INVITE " + IRCBot.nick + " :(.+)$",
                 Pattern.CASE_INSENSITIVE);
         Matcher ping = pingRegex.matcher(this.line);
-        ping.find();
+        if (!ping.find())
+            return null;
         return ping.group(4);
     }
 

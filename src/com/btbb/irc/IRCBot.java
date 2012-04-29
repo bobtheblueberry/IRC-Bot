@@ -42,7 +42,6 @@ public class IRCBot {
      */
     // ENIGMA-DEV Version
     static String server;
-    final String firstChannel;
     final String NICK;
     static String password;
 
@@ -81,7 +80,7 @@ public class IRCBot {
     String person;         // person.. or channel
     String lastChannel;
     String pmChannel;
-    String[] channels;
+    ArrayList<String> channels;
 
     ArrayList<String> choices;
     int choiceType = -1;
@@ -107,12 +106,12 @@ public class IRCBot {
             logDir.mkdirs();
             server = settings.get("server");
             String c = settings.get("channel");
+            channels = new ArrayList<String>();
             if (c.contains(","))
-                channels = c.split(",");
+                for (String s : c.split(","))
+                    channels.add(s);
             else
-                channels = new String[]
-                    { c };
-            firstChannel = channels[0];
+                channels.add(c);
             nick = NICK = settings.get("nick");
             password = settings.get("password");
             port = Integer.parseInt(settings.get("port"));
@@ -325,7 +324,7 @@ public class IRCBot {
             // +
             // "!mock [arg] !on !off !joke !cynic !quote [arg] !search [pl] [arg]");
             JavaBot.say("Commands: $help $time $define [arg] $greet (arg?) $taste [arg] "
-                    + "$mock [arg] $joke $cynic $twain $quote [arg] $search [pl] [arg] $google [arg] $g [arg]");
+                    + "$mock [arg] $joke $cynic $twain $quote [arg] $search [pl] [arg] $google [arg] $g [arg] $channels");
 
             return;
         } else if (request.match("joke")) {
@@ -338,6 +337,14 @@ public class IRCBot {
 
         } else if (request.match("twain")) {
             JavaBot.say(getRandom(twain));
+            return;
+
+        } else if (request.match("channels")) {
+            String s = "";
+            for (String c : channels)
+                s += c + " ";
+                    
+            JavaBot.say(s);
             return;
 
         } else if ((arg = request.matchArg("taste")) != null) {
@@ -396,18 +403,36 @@ public class IRCBot {
 
         if (request.hasOwnership()) {
             // check to see if the owner has given the !exit command
-            if (request.match("exit")) {
-                JavaBot.say("I'm tired, bye yall");
-                JavaBot.quit(lastChannel);
+            if ((arg = request.matchArg("part")) != null) {
+                if (!arg.startsWith("#")) {
+                    arg = "#" + arg;
+                }
+                arg = arg.toLowerCase();
+                boolean found = false;
+                for (String s : channels)
+                    if (s.equalsIgnoreCase(arg)) {
+                        found = true;
+                        break;
+                    }
+                channels.remove(arg);
+                if (!found) {
+                    JavaBot.say("I'm not there!");
+                    return;
+                }
+                JavaBot.say("Outta this bitch", arg);
+                JavaBot.part(arg);
             }
-
+            
             if ((arg = request.matchArg("join")) != null) {
                 if (!arg.startsWith("#"))
                     arg = "#" + arg;
+                arg = arg.toLowerCase();
                 JavaBot.say("I'm going to go over to " + arg + " and see what they're up to over there.");
                 JavaBot.join(arg);
+                channels.add(arg);
                 JavaBot.say("Hey guys!", arg);
             }
+            
         }
     }
 
