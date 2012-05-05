@@ -218,7 +218,9 @@ public class IRCBot {
             // INVITE
             // newchannel = request.getInviteMessage();
             // invited = true;
-            JavaBot.join(request.getInviteMessage());
+            String chan;
+            JavaBot.join( chan = request.getInviteMessage());
+            channels.add(chan);
         }
 
         // Check for nickname is already in use
@@ -445,6 +447,10 @@ public class IRCBot {
                 }
                 JavaBot.say("Outta this bitch", arg);
                 JavaBot.part(arg);
+            } else if (request.match("part")) {
+                JavaBot.say("Bye");
+                JavaBot.part(lastChannel);
+                channels.remove(lastChannel);
             }
 
             if ((arg = request.matchArg("join")) != null) {
