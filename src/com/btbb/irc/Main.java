@@ -57,7 +57,7 @@ public class Main {
             }
             r.close();
         } catch (IOException e) {
-            System.out.println("Rrror loading settings");
+            System.out.println("Error loading settings");
             e.printStackTrace();
         }
     }
@@ -74,6 +74,8 @@ public class Main {
             w.println("markov=markov.lua");
             w.println("logs=logs/");
             w.println("owner=JonPHolder");
+            w.println("modewait=1");
+            
             w.close();
         } catch (FileNotFoundException e) {
             System.out.println("Error writing settings");

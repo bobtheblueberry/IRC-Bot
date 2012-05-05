@@ -88,6 +88,7 @@ public class IRCBot {
     final int QUOTE = 1;
     final int SEARCH = 2;
     String searchQuery;
+    boolean waitforModed;
 
     /**
      * Set just before joining the new channel
@@ -118,6 +119,8 @@ public class IRCBot {
             markov = settings.get("markov");
             MANDATORY_OWNER = settings.get("owner");
             choices = new ArrayList<String>();
+            String s = settings.get("modewait");
+            waitforModed = (s == null) ? true : s.equals("1");
 
             System.out.println("Loading Foods");
             loadFile(foods = new ArrayList<String>(), "foods");
@@ -183,7 +186,7 @@ public class IRCBot {
 
     private void mainloop(String currLine) throws IOException {
         boolean justghosted = false;
-        boolean moded = false;
+        boolean moded = !waitforModed;
         ping = System.currentTimeMillis();
         String arg;
         String[] args;
@@ -294,7 +297,28 @@ public class IRCBot {
         int reqisNum = request.isNumber();
         if (reqisNum > 0) {
             if (reqisNum > choices.size()) {
-                JavaBot.say("no");
+                if (reqisNum == 69) {
+                    String s = "no";
+                    switch ((int) (Math.random() * 5)) {
+                        case 0:
+                            s = "Yes";
+                            break;
+                        case 1:
+                            s = "Okay";
+                            break;
+                        case 2:
+                            s = "sure";
+                            break;
+                        case 3:
+                            s = "anytime";
+                            break;
+                        case 4:
+                            s = "sure why not?";
+                            break;
+                    }
+                    JavaBot.say(s);
+                } else
+                    JavaBot.say("no");
                 return;
             }
             String s = choices.get(reqisNum - 1);
@@ -343,7 +367,7 @@ public class IRCBot {
             String s = "";
             for (String c : channels)
                 s += c + " ";
-                    
+
             JavaBot.say(s);
             return;
 
@@ -422,7 +446,7 @@ public class IRCBot {
                 JavaBot.say("Outta this bitch", arg);
                 JavaBot.part(arg);
             }
-            
+
             if ((arg = request.matchArg("join")) != null) {
                 if (!arg.startsWith("#"))
                     arg = "#" + arg;
@@ -432,7 +456,7 @@ public class IRCBot {
                 channels.add(arg);
                 JavaBot.say("Hey guys!", arg);
             }
-            
+
         }
     }
 
