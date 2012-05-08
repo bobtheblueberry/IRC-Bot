@@ -24,13 +24,11 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 
 /**
  * IRC Bot
  * 
- * static String server = "irc.freenode.net"; static String channel =
- * "#enigma-dev"; static String nick = "dickkkk"; static String password =
- * "dick555"
  * 
  * @author Serge Humphrey
  * 
@@ -40,7 +38,7 @@ public class IRCBot {
     /**
      * @param args
      */
-    // ENIGMA-DEV Version
+
     static String server;
     final String NICK;
     static String password;
@@ -214,6 +212,11 @@ public class IRCBot {
         }
         System.out.println(currLine);
 
+        Matcher m = request.getKick();
+        if (m.matches()) {
+            JavaBot.join(m.group(4));
+        }
+        
         if (request.isInvite()) {
             // INVITE
             // newchannel = request.getInviteMessage();

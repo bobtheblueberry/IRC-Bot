@@ -78,6 +78,13 @@ public class Request {
         return match.matches();
     }
 
+    public Matcher getKick() {
+        //:DarkAceZ!~BillyMays@50.107.52.50 KICK #HAX4ALL dickkkk :dickkkk
+        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) KICK (.+) " + IRCBot.nick + " :" +IRCBot.nick, Pattern.CASE_INSENSITIVE);
+        Matcher match = regex.matcher(this.line); 
+        return match;
+    }
+    
     public boolean isNotice() {
         Pattern regex = Pattern.compile("^:(.+) NOTICE (.+)", Pattern.CASE_INSENSITIVE);
         Matcher match = regex.matcher(this.line);
