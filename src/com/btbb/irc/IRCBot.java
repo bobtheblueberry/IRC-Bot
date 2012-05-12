@@ -348,6 +348,7 @@ public class IRCBot {
             Date d = new Date();
             String msg = "The date is " + d;
             JavaBot.say(msg);
+            return;
         } else if (request.match("help")) {
             // JavaBot.say("Commands: !help !time !define [arg] !greet (arg?) !taste [arg] "
             // +

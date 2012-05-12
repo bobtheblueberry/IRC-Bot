@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 public class Request {
 
     private String line;
-    private String C = "\\$";
+    private String C = "$";
 
     public Request(String line)
         {
@@ -14,7 +14,7 @@ public class Request {
         }
 
     public String getChannel() {
-        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (.+) :(.+)", Pattern.CASE_INSENSITIVE);
+        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+) :(.+)", Pattern.CASE_INSENSITIVE);
         Matcher match = regex.matcher(this.line);
         if (!match.find()) {
             return null;
@@ -53,7 +53,7 @@ public class Request {
              return match.group(5);
          } else {
          //CHANGES : Replaced " + Main.channel + " with (.+)
-          */Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (.+) :(.+)$", Pattern.CASE_INSENSITIVE);
+          */Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+) :(.+)$", Pattern.CASE_INSENSITIVE);
         Matcher match = regex.matcher(this.line);
         if (!match.find()) {
             return null;
@@ -67,13 +67,13 @@ public class Request {
     }
 
     public boolean isCommand() {
-        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (.+)" + C + "(.+)", Pattern.CASE_INSENSITIVE);
+        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+) :" + Pattern.quote(C) + "(.+)", Pattern.CASE_INSENSITIVE);
         Matcher match = regex.matcher(this.line);
         return match.matches();
     }
 
     public boolean isMSG() {
-        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (.+)", Pattern.CASE_INSENSITIVE);
+        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+)", Pattern.CASE_INSENSITIVE);
         Matcher match = regex.matcher(this.line);
         return match.matches();
     }
@@ -146,7 +146,7 @@ public class Request {
 
     public int isNumber() {
         Matcher m;
-        Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (.+) :" + C + "([0-9]+)", Pattern.CASE_INSENSITIVE);
+        Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+) :" + Pattern.quote(C) + "([0-9]+)", Pattern.CASE_INSENSITIVE);
         m = regex.matcher(this.line);
         if (!m.matches()) {
             return -1;
@@ -172,8 +172,9 @@ public class Request {
              Matcher m = regex.matcher(this.line);
              return m.matches();
          }*/
-        Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (.+) :" + C + command, Pattern.CASE_INSENSITIVE);
+        Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+) :" + Pattern.quote(C + command), Pattern.CASE_INSENSITIVE);
         Matcher m = regex.matcher(this.line);
+        
         return m.matches();
     }
 
@@ -187,7 +188,7 @@ public class Request {
              m = regex.matcher(this.line);
              n = 4;
          } else {
-          */Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (.+) :" + C + command + " (.+)",
+          */Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+) :" + Pattern.quote(C + command) + " (.+)",
                 Pattern.CASE_INSENSITIVE);
         m = regex.matcher(this.line);
         n = 4;
@@ -208,7 +209,7 @@ public class Request {
              m = regex.matcher(this.line);
              n = 4;
          } else {
-          */Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (.+) :" + C + command + " (.+) (.+)",
+          */Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+) :" + Pattern.quote(C + command) + " (.+) (.+)",
                 Pattern.CASE_INSENSITIVE);
         m = regex.matcher(this.line);
         n = 4;
@@ -221,7 +222,7 @@ public class Request {
     }
 
     public String[] matchArgName1(String command) {
-        Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (.+) :" + C + command + " ([A-Za-z0-9_.-]+) (.+)",
+        Pattern regex = Pattern.compile("^:(.+)!(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+) :" + Pattern.quote(C + command) + " ([A-Za-z0-9_.-]+) (.+)",
                 Pattern.CASE_INSENSITIVE);
         Matcher m = regex.matcher(this.line);
         if (!m.matches()) {
