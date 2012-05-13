@@ -73,7 +73,7 @@ public class Request {
     }
 
     public boolean isMSG() {
-        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (#?[a-zA-Z_0-9\\-]+)", Pattern.CASE_INSENSITIVE);
+        Pattern regex = Pattern.compile("^:(.+)!(.+)@(.+) PRIVMSG (.+)", Pattern.CASE_INSENSITIVE);
         Matcher match = regex.matcher(this.line);
         return match.matches();
     }

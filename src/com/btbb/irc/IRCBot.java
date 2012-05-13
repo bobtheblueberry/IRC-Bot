@@ -215,6 +215,7 @@ public class IRCBot {
         Matcher m = request.getKick();
         if (m.matches()) {
             JavaBot.join(m.group(4));
+            return;
         }
         
         if (request.isInvite()) {
@@ -270,14 +271,15 @@ public class IRCBot {
 
         // LOG
         if (!request.isCommand()) {
-
+            System.out.println("msg " + message);
             // TODO : NOTE : Changed "." for command to "!"
             if (isMSG && !isPM) {
+                System.out.println("sender " + request.getSender());
                 if (message != null && message.length() > 0 && !request.getSender().equals(nick)
-                        && !message.startsWith("!") && !message.contains("(") && !message.contains(")")
-                        && !message.startsWith("@")) {
+                        && !message.startsWith("!") && !message.startsWith("@")) {
                     // Add phrase to the log files
                     File log = new File(logDir, sender);
+                    System.out.println("writing to " + log.getPath());
                     BufferedWriter out = new BufferedWriter(new FileWriter(log, true));
                     out.write(message.replaceAll("\n", "") + "\n");
                     out.close();
@@ -451,10 +453,12 @@ public class IRCBot {
                 }
                 JavaBot.say("Outta this bitch", arg);
                 JavaBot.part(arg);
+                return;
             } else if (request.match("part")) {
                 JavaBot.say("Bye");
                 JavaBot.part(lastChannel);
                 channels.remove(lastChannel);
+                return;
             }
 
             if ((arg = request.matchArg("join")) != null) {
@@ -465,7 +469,10 @@ public class IRCBot {
                 JavaBot.join(arg);
                 channels.add(arg);
                 JavaBot.say("Hey guys!", arg);
+                return;
             }
+            
+            JavaBot.say("Unknown command " + request.getMessage());
 
         }
     }
