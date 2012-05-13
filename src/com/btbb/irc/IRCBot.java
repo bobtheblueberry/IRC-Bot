@@ -271,10 +271,8 @@ public class IRCBot {
 
         // LOG
         if (!request.isCommand()) {
-            System.out.println("msg " + message);
             // TODO : NOTE : Changed "." for command to "!"
             if (isMSG && !isPM) {
-                System.out.println("sender " + request.getSender());
                 if (message != null && message.length() > 0 && !request.getSender().equals(nick)
                         && !message.startsWith("!") && !message.startsWith("@")) {
                     // Add phrase to the log files
