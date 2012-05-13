@@ -277,7 +277,6 @@ public class IRCBot {
                         && !message.startsWith("!") && !message.startsWith("@")) {
                     // Add phrase to the log files
                     File log = new File(logDir, sender);
-                    System.out.println("writing to " + log.getPath());
                     BufferedWriter out = new BufferedWriter(new FileWriter(log, true));
                     out.write(message.replaceAll("\n", "") + "\n");
                     out.close();
@@ -337,7 +336,7 @@ public class IRCBot {
             }
             return;
         }
-        if ((arg = request.matchArg("echo")) != null) {
+        if ((arg = request.matchArg("echo")) != null || (arg = request.matchArg("$echo")) != null) {
             JavaBot.say(arg);
             return;
         } else if (request.match("echo")) {
