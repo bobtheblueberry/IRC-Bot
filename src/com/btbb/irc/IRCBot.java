@@ -412,6 +412,7 @@ public class IRCBot {
             return;
         } else if ((arg = request.matchArg("define")) != null) {
             JavaBot.say(define(arg));
+            return;
         } else if ((args = request.matchArgName1("search")) != null) {
             search(args);
             return;
